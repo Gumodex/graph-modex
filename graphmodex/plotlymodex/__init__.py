@@ -1,5 +1,6 @@
 from .layout import (
     main_layout,
+    subplot,
 )
 from .graphs import (
     frequency,
@@ -8,6 +9,7 @@ from .graphs import (
 
 __all__ = [
     'main_layout',
+    'subplot',
 
     'frequency',
 ]
