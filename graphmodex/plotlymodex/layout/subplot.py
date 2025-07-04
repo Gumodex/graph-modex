@@ -25,7 +25,9 @@ def subplot(figs:list, rows:int=1, cols:int=2, subplot_titles:list[str]=None, ti
         vertical_spacing = 0.1
     
     if subplot_titles is None:
-        subplot_titles = [f"Graph {i+1}" for i in range(len(figs))]
+        subplot_titles = []
+        for fig_ in figs:
+            subplot_titles.append(fig_.layout['title']['text'])
 
     fig = subplots.make_subplots(
         rows=rows, cols=cols, subplot_titles=subplot_titles,
