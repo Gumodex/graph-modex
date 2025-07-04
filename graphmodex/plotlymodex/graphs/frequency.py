@@ -19,11 +19,100 @@ __all__ = [
 ]
 
 
-def frequency(df:pd.DataFrame, x:str, covariate:str=None, bin_size:Union[int, None]=None, colors:Union[list, str]=None,
-              histnorm:Literal[None, 'probability density']='probability density', categorical:bool=None,
-              show_curve:bool=True, show_hist:bool=True, show_rug:bool=False, opacity:float=0.8,
-              min_max:bool=True, sort_x:bool=True, layout_kwargs:dict=None, bar_kwargs:dict=None, marker_kwargs:dict=None) -> go.Figure:
-    
+def frequency(
+        df:pd.DataFrame, 
+        x:str, 
+        covariate:str=None, 
+        bin_size:Union[int, None]=None, 
+        colors:Union[list, str]=None,
+        histnorm:Literal[None, 'probability density']='probability density', 
+        categorical:bool=None,
+        show_curve:bool=True, 
+        show_hist:bool=True, 
+        show_rug:bool=False, 
+        opacity:float=0.8,
+        min_max:bool=True, 
+        sort_x:bool=True, 
+        layout_kwargs:dict=None, 
+        bar_kwargs:dict=None, 
+        marker_kwargs:dict=None
+    ) -> go.Figure:
+    """
+    Plot the frequency distribution of a column in a DataFrame using Plotly, supporting both categorical and continuous variables.
+
+    This function generates frequency plots for a specified column in a DataFrame. It supports categorical and continuous data types
+    and optionally allows stratification by a covariate. For continuous data, distribution plots are shown; for categorical data,
+    bar plots are rendered. It uses Plotly for interactive visualization.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input DataFrame containing the data.
+    x : str
+        Column name in `df` for which to calculate the frequency.
+    covariate : str, optional
+        Column to stratify data by. Cannot be the same as `x`.
+    bin_size : int or None, optional
+        Bin size for continuous data. If None, it's computed automatically.
+    colors : list or str, optional
+        List of colors or a single color string for the plot.
+    histnorm : {'probability density', None}, default='probability density'
+        Normalization type for histogram (used in continuous plots).
+    categorical : bool, optional
+        Force the column `x` to be treated as categorical.
+    show_curve : bool, default=True
+        Whether to display KDE curve in continuous plots.
+    show_hist : bool, default=True
+        Whether to display histogram bars in continuous plots.
+    show_rug : bool, default=False
+        Whether to show rug plot in continuous plots.
+    opacity : float, default=0.8
+        Opacity of the plot elements.
+    min_max : bool, default=True
+        For continuous plots with covariate: include min/max values across all groups in each group.
+    sort_x : bool, default=True
+        Whether to sort x-axis categories (for categorical plots without covariate).
+    layout_kwargs : dict, optional
+        Additional keyword arguments passed to the layout function.
+    bar_kwargs : dict, optional
+        Additional keyword arguments passed to `go.Bar` in categorical plots.
+    marker_kwargs : dict, optional
+        Additional marker customization passed to Plotly trace markers.
+
+    Returns
+    -------
+    go.Figure
+        Plotly figure object containing the frequency plot.
+
+    Raises
+    ------
+    ValueError
+        If `x` or `covariate` columns are not in the DataFrame.
+    ValueError
+        If `x` or `covariate` is a datetime column.
+    ValueError
+        If the covariate has more than 20 unique categories.
+    UserWarning
+        If there are NaNs or datetime covariates detected during plotting.
+
+    Examples
+    --------
+    >>> df = pd.DataFrame({
+    >>>         'x1':np.random.random(100),
+    >>>         'x2':np.random.choice(['a', 'b', 'c'], 100),
+    >>>         'x3':np.random.choice([1, 2, 3], 100),
+    >>>     })
+
+    >>> fig = frequency(df, x="x1", show_rug=True)
+    >>> fig.show()
+
+    >>> fig = frequency(df, x="x1", covariate="x2", colors=["black"])
+    >>> fig.show()
+
+    >>> fig = frequency(df, x="x3", sort_x=False, opacity=0.6, categorical=True)
+    >>> fig.show()
+    """
+
     if df is None:
         raise ValueError("DataFrame cannot be None")
     df = df.copy()
@@ -45,8 +134,9 @@ def frequency(df:pd.DataFrame, x:str, covariate:str=None, bin_size:Union[int, No
     if pd.api.types.is_datetime64_any_dtype(df[x]):
         raise ValueError(f'Column "{x}" is datetime64, so frequency is not suitable')
 
-    categorical = pd.api.types.is_object_dtype(df[x]) or \
-                  isinstance(df[x], pd.CategoricalDtype)
+    if categorical is None:
+        categorical = pd.api.types.is_object_dtype(df[x]) or \
+                    isinstance(df[x], pd.CategoricalDtype)
     if categorical:
         df[x] = df[x].fillna('NaN')
     else:
