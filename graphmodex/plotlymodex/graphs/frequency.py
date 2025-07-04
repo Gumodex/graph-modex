@@ -1,7 +1,9 @@
 import os
 import sys
+import warnings
 
 import pandas as pd
+import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 import plotly.figure_factory as ff
@@ -17,7 +19,7 @@ __all__ = [
 ]
 
 
-def frequency(df:pd.DataFrame, x:str, covariate:str=None, bin_size:int=1, colors:Union[list, str]=None,
+def frequency(df:pd.DataFrame, x:str, covariate:str=None, bin_size:Union[int, None]=None, colors:Union[list, str]=None,
               histnorm:Literal[None, 'probability density']='probability density', categorical:bool=None,
               show_curve:bool=True, show_hist:bool=True, show_rug:bool=False, opacity:float=0.8,
               min_max:bool=True, sort_x:bool=True, layout_kwargs:dict=None, bar_kwargs:dict=None, marker_kwargs:dict=None) -> go.Figure:
@@ -29,11 +31,31 @@ def frequency(df:pd.DataFrame, x:str, covariate:str=None, bin_size:int=1, colors
     if x not in df.columns:
         raise ValueError(f"Column '{x}' not found in DataFrame")
     
-    if (covariate is not None) and (covariate not in df.columns):
-        raise ValueError(f"Covariate '{covariate}' not found in DataFrame")
+    if covariate == x:
+        covariate = None
+    if (covariate is not None):
+        if (covariate not in df.columns):
+            raise ValueError(f"Covariate '{covariate}' not found in DataFrame")
+        if pd.api.types.is_datetime64_any_dtype(df[covariate]):
+            warnings.warn(f'Column "{covariate}" is datetime64, so frequency is not suitable', category=UserWarning)
+            covariate = None
+        if len(df[covariate].unique()) > 20:
+            raise ValueError(f"There are more than 20 categories in {covariate}, therefore visuals won't be useful")
+    
+    if pd.api.types.is_datetime64_any_dtype(df[x]):
+        raise ValueError(f'Column "{x}" is datetime64, so frequency is not suitable')
 
     categorical = pd.api.types.is_object_dtype(df[x]) or \
                   isinstance(df[x], pd.CategoricalDtype)
+    if categorical:
+        df[x] = df[x].fillna('NaN')
+    else:
+        df[x] = df[x].replace([np.inf, -np.inf], np.nan)
+        df = df.dropna(subset=x)
+
+    if (bin_size is None) and (not categorical):
+        range_ = df[x].max() - df[x].min()
+        bin_size = range_/15
 
     if categorical:
         try:
@@ -89,7 +111,16 @@ def frequency(df:pd.DataFrame, x:str, covariate:str=None, bin_size:int=1, colors
         else:
             group_labels = [x]
             grouped_data = [df[f'{x}']]
-        
+        drop = []
+        for i, label_ in enumerate(group_labels):
+            if pd.isna(label_):  # catches both None and NaN
+                drop.append(i)
+                warnings.warn('Attention: there are NaN values and they will not be considered in the analysis\nIt might be present in some category!')
+        # Remove from the list by index (in reverse order to avoid shifting)
+        for i in reversed(drop):
+            del group_labels[i]
+            del grouped_data[i]
+
         if isinstance(colors, str):
             colors = [colors]
         if covariate is not None and isinstance(colors, list):
