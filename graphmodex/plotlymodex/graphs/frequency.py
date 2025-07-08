@@ -20,8 +20,8 @@ __all__ = [
 
 
 def frequency(
-        df:pd.DataFrame, 
-        x:str, 
+        df:pd.DataFrame=None, 
+        x:str=None, 
         covariate:str=None, 
         bin_size:Union[int, None]=None, 
         colors:Union[list, str]=None,
@@ -49,9 +49,9 @@ def frequency(
     df : pd.DataFrame
         Input DataFrame containing the data.
     x : str
-        Column name in `df` for which to calculate the frequency.
+        Column name in `df` for which to calculate the frequency or a list with the values (`df` must not be specified in this case).
     covariate : str, optional
-        Column to stratify data by. Cannot be the same as `x`.
+        Column to stratify data by or a list with the values (`df` must not be specified in this case). Cannot be the same as `x`.
     bin_size : int or None, optional
         Bin size for continuous data. If None, it's computed automatically.
     colors : list or str, optional
@@ -113,10 +113,20 @@ def frequency(
     >>> fig.show()
     """
 
-    if df is None:
+    if (df is None) and isinstance(x, (list, np.ndarray)):
+        if (covariate is not None) and isinstance(covariate, (list, np.ndarray)):
+            df = pd.DataFrame(data={'x': x, 'covariate': covariate})
+            x = 'x'
+            covariate = 'covariate'
+        else:
+            df = pd.DataFrame(data={'x': x})
+            x = 'x'
+    elif (df is None) and isinstance(x, str):
         raise ValueError("DataFrame cannot be None")
     df = df.copy()
-    
+
+    if (df is not None) and (not isinstance(x, str)):
+        raise ValueError(f'Since `df` is specified, x and covariate need to be strings columns')
     if x not in df.columns:
         raise ValueError(f"Column '{x}' not found in DataFrame")
     
