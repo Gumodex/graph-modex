@@ -1,5 +1,6 @@
 import os
 import sys
+import copy
 
 import plotly.subplots as subplots
 
@@ -13,12 +14,23 @@ __all__ = [
 
 
 def subplot(figs:list, rows:int=1, cols:int=2, subplot_titles:list[str]=None, title:str='Plots',
-            width:int=1400, height:int=600, shared_xaxes:bool=False, shared_yaxes:bool=False,
+            width:int=1400, height:int=600, legends:list[bool]=[],
+            shared_xaxes:bool=False, shared_yaxes:bool=False,
             horizontal_spacing:float=0.08, vertical_spacing:float=0.08,
             layout_kwargs:dict=None, subplots_kwargs:dict=None):
 
     if len(figs) == 0:
         raise ValueError("The 'figs' argument must contain at least one figure.")
+    
+    figs = [copy.deepcopy(f) for f in figs]
+
+    while len(legends) < len(figs):
+        legends.append(1)
+    legends = [bool(x) for x in legends]
+    for i, fig_ in enumerate(figs):
+        for trace_ in fig_.data:
+            trace_.showlegend = legends[i]
+
     while rows*cols < len(figs):
         rows += 1
         height += 400
