@@ -34,6 +34,7 @@ def animated_scatter(
         layout_kwargs:Optional[Dict]=None,
         trace_kwargs:Optional[Dict]=None,
         animation:bool=True,
+        auto_fit:bool=True,
     ) -> go.Figure:
     """
     Create an animated scatter plot using Plotly Express.
@@ -72,6 +73,8 @@ def animated_scatter(
         Additional keyword arguments to update each trace (e.g., marker settings).
     animation : bool, optional
         If False, disables the animation feature, removing frames and controls.
+    auto_fit : bool, default=True
+        If True, automatically adjusts the x and y ranges based on the data.
 
     Returns
     -------
@@ -129,6 +132,11 @@ def animated_scatter(
     if title is None:
         title = f"Scatter | {x} vs {y} with {animation_frame}"
     
+    if (auto_fit):
+        # Automatically adjust x and y ranges based on data
+        x_range = (df[x].min(), df[x].max()) if x_range is None else x_range
+        y_range = (df[y].min(), df[y].max()) if y_range is None else y_range
+
     # Use your custom layout function
     plotlymodex.main_layout(
         fig=fig,
@@ -172,6 +180,7 @@ def animated_bar(
         layout_kwargs:Optional[Dict]=None,
         trace_kwargs:Optional[Dict]=None,
         animation:bool=True,
+        auto_fit:bool=True,
     ) -> go.Figure:
     """
     Generate an animated bar chart using Plotly Express with optional grouping, coloring, and patterns.
@@ -212,6 +221,8 @@ def animated_bar(
         Additional keyword arguments to update the bar traces.
     animation : bool, default=True
         Whether to include animation in the resulting figure.
+    auto_fit : bool, default=True
+        If True, automatically adjusts the x and y ranges based on the data.
 
     Returns
     -------
@@ -233,9 +244,9 @@ def animated_bar(
     """
 
     columns = [x, animation_frame]
-    if color is not None:
+    if (color is not None) and (color != x) and (color != y) and (color != animation_frame):
         columns.append(color)
-    if pattern_shape is not None:
+    if (pattern_shape is not None)  and (pattern_shape != x) and (pattern_shape != y) and (pattern_shape != animation_frame) and (pattern_shape != color):
         columns.append(pattern_shape)
     
     df = df.copy(deep=True)
@@ -263,6 +274,11 @@ def animated_bar(
     if title is None:
         title = f"Bar | {x} vs {y} with {animation_frame}"
     
+    if (auto_fit):
+        # Automatically adjust x and y ranges based on data
+        x_range = (df[x].min(), df[x].max()) if x_range is None else x_range
+        y_range = (df['agg_func'].min(), df['agg_func'].max()) if y_range is None else y_range
+
     # Use your custom layout function
     plotlymodex.main_layout(
         fig=fig,
