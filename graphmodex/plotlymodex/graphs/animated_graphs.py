@@ -35,6 +35,7 @@ def animated_scatter(
         trace_kwargs:Optional[Dict]=None,
         animation:bool=True,
         auto_fit:bool=True,
+        ascending:bool=True,
     ) -> go.Figure:
     """
     Create an animated scatter plot using Plotly Express.
@@ -75,6 +76,8 @@ def animated_scatter(
         If False, disables the animation feature, removing frames and controls.
     auto_fit : bool, default=True
         If True, automatically adjusts the x and y ranges based on the data.
+    ascending : bool, default=True
+        If True, sorts the DataFrame by the animation frame and color columns in ascending order.
 
     Returns
     -------
@@ -107,7 +110,7 @@ def animated_scatter(
         columns.append(symbol)
     
     df = df.copy(deep=True)
-    df = df.sort_values(by=columns)
+    df = df.sort_values(by=columns, ascending=ascending)
 
     if isinstance(colorscale, str):
         colorscale = [colorscale]
