@@ -253,7 +253,23 @@ def animated_bar(
         columns.append(pattern_shape)
     
     df = df.copy(deep=True)
-    df = df.groupby(columns)[y].agg(agg_func=agg_func).reset_index()
+    
+    if animation and (color or pattern_shape):
+        agg_dict = {
+            k: pd.Series.nunique
+            for k in [color, pattern_shape]
+            if k is not None and k in df.columns
+        }
+
+        if agg_dict:
+            frame_counts = df.groupby(animation_frame).agg(agg_dict).fillna(0)
+
+            if not frame_counts.empty:
+                frame_counts["score"] = frame_counts.sum(axis=1)
+                sorted_frames = frame_counts.sort_values("score", ascending=False).index.tolist()
+                df[animation_frame] = pd.Categorical(df[animation_frame], categories=sorted_frames, ordered=True)
+
+    df = df.groupby(columns, observed=False)[y].agg(agg_func=agg_func).reset_index()
 
     if isinstance(colorscale, str):
         colorscale = [colorscale]
