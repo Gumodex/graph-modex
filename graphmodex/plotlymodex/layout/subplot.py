@@ -123,4 +123,7 @@ def subplot(figs:list, rows:int=1, cols:int=2, subplot_titles:list[str]=None, ti
 
     plotlymodex.main_layout(fig, title=title, width=width, height=height, x='x', y='y')
 
+    if layout_kwargs:
+        fig.update_layout(**layout_kwargs)
+
     return fig
