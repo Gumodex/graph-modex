@@ -17,7 +17,8 @@ def subplot(figs:list, rows:int=1, cols:int=2, subplot_titles:list[str]=None, ti
             width:int=1400, height:int=600, legends:list[bool]=[],
             shared_xaxes:bool=False, shared_yaxes:bool=False,
             horizontal_spacing:float=0.08, vertical_spacing:float=0.08,
-            layout_kwargs:dict=None, subplots_kwargs:dict=None):
+            xaxes_names='x', yaxes_names='y',
+            layout_kwargs:dict=None, subplots_kwargs:dict=None,):
     """
     Combine multiple Plotly figures into a single subplot layout with shared configuration.
 
@@ -52,6 +53,10 @@ def subplot(figs:list, rows:int=1, cols:int=2, subplot_titles:list[str]=None, ti
         Additional layout settings to apply to the main figure. (Unused in current version)
     subplots_kwargs : dict, optional
         Additional keyword arguments passed to `make_subplots`.
+    xaxes_names : list, optional
+        Provide the names for all X axis
+    yaxes_names : list, optional
+        Provide the names for all Y axis
 
     Returns
     -------
@@ -125,5 +130,32 @@ def subplot(figs:list, rows:int=1, cols:int=2, subplot_titles:list[str]=None, ti
 
     if layout_kwargs:
         fig.update_layout(**layout_kwargs)
+
+
+    # ---- AXIS' NAMES ----
+
+    # How many axis exists
+    num_x = sum(1 for k in fig.layout if k.startswith("xaxis"))
+    num_y = sum(1 for k in fig.layout if k.startswith("yaxis"))
+
+    # If only a string → replicate to all axis
+    if isinstance(xaxes_names, str):
+        xaxes_names = [xaxes_names] * num_x
+    if isinstance(yaxes_names, str):
+        yaxes_names = [yaxes_names] * num_y
+
+    # Complete short lists with commum values
+    if len(xaxes_names) < num_x:
+        xaxes_names += ['x'] * (num_x - len(xaxes_names))
+    if len(yaxes_names) < num_y:
+        yaxes_names += ['y'] * (num_y - len(yaxes_names))
+
+    # Apply the axis' names
+    for i in range(1, num_x + 1):
+        fig.layout[f"xaxis{i}"].title.text = xaxes_names[i-1]
+
+    for i in range(1, num_y + 1):
+        fig.layout[f"yaxis{i}"].title.text = yaxes_names[i-1]
+
 
     return fig
